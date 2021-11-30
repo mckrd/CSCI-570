@@ -3,6 +3,11 @@
 #include <string>
 #include <math.h>
 #include <ctype.h>
+#include <ctime>
+#include <cstdlib>
+
+#include <Windows.h>
+#include <Psapi.h>
 
 using namespace std;
 
@@ -24,6 +29,8 @@ bool isNumber(string s)
 
 int main()
 {
+	//PMC is used to detect how much RAM is used. May or may not be a windows-only command.
+	PROCESS_MEMORY_COUNTERS pmc;
 
 	string baseString1 = "", baseString2 = ""; // The base string in the input file
 	string finalString1 = "", finalString2 = ""; // The final strings generated from the base strings
@@ -33,6 +40,8 @@ int main()
 	
 	fstream myFile;
 	myFile.open("input.txt", ios::in); // Read
+
+	ofstream outputFile("output.txt"); //File to write out to
 	
 	if ( myFile.is_open())
 	{
@@ -91,7 +100,33 @@ int main()
 	cout<<"k is: "<<k<<"\n";
 	cout<<"final generated string 2 is: "<<finalString2<<"\n";
 	*/
+
+	//temporary timer code starts here
+
+	clock_t startTime = clock();
+	float secondsPassed;
+	float secondsToDelay = 10;
+
+
+	bool flag = true;
+	while (flag) {
+		secondsPassed = (clock() - startTime) / CLOCKS_PER_SEC;
+		if (secondsPassed >= secondsToDelay) {
+			if (outputFile.is_open()) outputFile << secondsPassed << " seconds have passed.\n";
+			flag = false;
+		}
+	}
 	
+	if (outputFile.is_open()) {
+		outputFile << "hello world\n";
+		outputFile << "this is where the timer information goes\n";
+	}
+
+	//Outputs RAM being used. However, not sure if this is specific to windows machines or not
+	bool result = K32GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
+	SIZE_T physMemUsedByMe = pmc.WorkingSetSize;
+
+	outputFile << physMemUsedByMe/1024 << " Kilobytes of memory used.\n";
 
 
 	return 0;
