@@ -145,6 +145,121 @@ int sequence_alignment(string a1, string b1, int delta, int alpha[4][4], string&
 	return -1;
 }
 
+int memEff_sequence_alignment(string a1, string b1, int delta, int alpha[4][4], int q) {
+	int m = a1.size();
+	int n = b1.size();
+
+	// m * 2 array
+	vector<vector<int>> OPT(m + 1, vector<int>(2, 0));
+
+	/*
+		Base case:
+		OPT[i][0] = i * delta for i = 0 to m
+	*/
+	for (int i = 0; i <= m; ++i)
+		OPT[i][0] = i * delta;
+
+	/*
+		Recurrence:
+	*/
+	for (int j = 1; j <= n; ++j)
+	{
+		OPT[0][1] = j * delta;
+		for (int i = 1; i <= m; ++i)
+		{
+			int x_i = transform(a1[i - 1]);
+			int y_j = transform(b1[j - 1]);
+			OPT[i][1] = min(OPT[i - 1][0] + alpha[x_i][y_j],
+				min(OPT[i - 1][1] + delta, OPT[i][0] + delta));
+		}
+		for (int i = 0; i <= m; ++i)
+			OPT[i][0] = OPT[i][1];
+	}
+
+	int smallest = 5000;
+	for (int i = 0; i <= m; ++i) {
+		if (OPT[i][1] < smallest) {
+			smallest = OPT[i][1];
+			q = i;
+		}
+	}
+
+	return OPT[q][1];
+
+}
+
+int backMemEff_sequence_alignment(string a1, string b1, int delta, int alpha[4][4], int q) {
+	int m = a1.size();
+	int n = b1.size();
+
+	// m * 2 array
+	vector<vector<int>> OPT(m + 1, vector<int>(2, 0));
+
+	/*
+		Base case:
+		OPT[i][0] = i * delta for i = 0 to m
+	*/
+	for (int i = m; i >= 0; i--)
+		OPT[i][0] = i * delta;
+
+	/*
+		Recurrence:
+	*/
+	for (int j = n-1; j >= 0; j--)
+	{
+		OPT[0][1] = j * delta;
+		for (int i = m-1; i >= 0; i--)
+		{
+			int x_i = transform(a1[i + 1]);
+			int y_j = transform(b1[j + 1]);
+			OPT[i][1] = min(OPT[i + 1][0] + alpha[x_i][y_j],
+				min(OPT[i + 1][1] + delta, OPT[i][0] + delta));
+		}
+		for (int i = m ; i >= 0; --i)
+			OPT[i][0] = OPT[i][1];
+	}
+
+	int smallest = 5000;
+	for (int i = 0; i <= m; i++) {
+		if (OPT[i][1] < smallest) {
+			smallest = OPT[i][1];
+			q = i;
+		}
+	}
+
+	return OPT[q][1];
+
+}
+
+void D_and_C_Alignment(string a1, string b1, int delta, int alpha[4][4], string & a2, string & b2, int & penalty) {
+	int m = a1.size();
+	int n = b1.size();
+
+	if (m <= 2 || n <= 2) cout << "base algo goes here\n"; //sequence_alignment(a1, b1, delta, alpha, a2, b2, 1); //temporary base algorithm. Change this to Mayank's version
+	else {
+		string bLowerHalf = b1.substr(0, n / 2);
+		string bUpperHalf = b1.substr((n / 2) + 1);
+
+		int q = 0;
+
+		int optValLow = memEff_sequence_alignment(a1, bLowerHalf, delta, alpha, q);
+		int optValUp = backMemEff_sequence_alignment(a1, bUpperHalf, delta, alpha, q);
+
+		penalty += optValLow + optValUp;
+
+		a2 += a1.at(q);
+		b2 += b1.at(n / 2);
+
+		string aLowerHalf = a1.substr(0, q);
+		string aUpperHalf = a1.substr(q + 1);
+
+		D_and_C_Alignment(aLowerHalf, bLowerHalf, delta, alpha, a2, b2, penalty);
+		D_and_C_Alignment(aUpperHalf, bUpperHalf, delta, alpha, a2, b2, penalty);
+		
+		
+	}
+}
+
 bool validateLength(string finalString, string baseString, int n)
 {
 	int validLength = pow(2,n) * baseString.length(); 
@@ -162,8 +277,6 @@ bool isNumber(string s)
 
 int main()
 {
-	//PMC is used to detect how much RAM is used. May or may not be a windows-only command.
-	PROCESS_MEMORY_COUNTERS pmc;
 
 	string a = "", b = ""; // The base string a, b in the input file
 	string a1 = "", b1 = ""; // The final strings a1, b1 generated from the base strings
@@ -264,12 +377,21 @@ int main()
 	*/
 	int flag = 0;
 
+	//PMC is used to detect how much RAM is used. May or may not be a windows-only command.
+	PROCESS_MEMORY_COUNTERS pmc;
+
 	/*
 		The resulting aligned strings
 	*/
 	string a2, b2 = "";
-	int penalty = sequence_alignment(a1, b1, delta, alpha, a2, b2, flag);
+	int penalty = 0;
+	D_and_C_Alignment(a1, b1, delta, alpha, a2, b2, penalty);
+	//int penalty = memEff_sequence_alignment(a1, b1, delta, alpha, a2, b2);
+	//penalty = sequence_alignment(a1, b1, delta, alpha, a2, b2, flag);
 
+	//Outputs RAM being used. However, not sure if this is specific to windows machines or not
+	bool result = K32GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
+	SIZE_T physMemUsedByMe = pmc.WorkingSetSize;
 
 	//temporary timer code starts here
 
@@ -295,9 +417,7 @@ int main()
 		outputFile << b2 << endl;
 	}
 
-	//Outputs RAM being used. However, not sure if this is specific to windows machines or not
-	bool result = K32GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
-	SIZE_T physMemUsedByMe = pmc.WorkingSetSize;
+
 
 	outputFile << physMemUsedByMe/1024 << " Kilobytes of memory used.\n";
 
