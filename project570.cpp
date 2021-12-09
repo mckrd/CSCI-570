@@ -28,32 +28,31 @@ bool isNumber(string s)
 
 }
 
-const size_t alphabets = 26;
+const size_t letters = 26;
 
-int align(string finalString1, string finalString2, int gap_penalty, 
-		int mismatchPenalty[alphabets][alphabets], string &alignedString1, string &alignedString2)
+int alignSequence(string finalString1, string finalString2, int gap_penalty, 
+		int mismatchPenalty[letters][letters], string &alignedString1, string &alignedString2)
 {
     int n = finalString1.size();
     int m = finalString2.size();
 
-    vector<vector<int> > A(n + 1, vector<int>(m + 1));
+    vector<vector<int> > OPT(n+1, vector<int>(m+1));
 
     int i, j;
 
-    for (i = 0; i <= m; ++i)
-        A[0][i] = gap_penalty * i;
-    for (i = 0; i <= n; ++i)
-        A[i][0] = gap_penalty * i;
+    for (i = 0; i <= m; i++)
+        OPT[0][i] = gap_penalty*i;
+    for (i = 0; i <= n; i++)
+        OPT[i][0] = gap_penalty*i;
 
-    for (i = 1; i <= n; ++i)
+    for (i = 1; i <= n; i++)
     {
-        for (j = 1; j <= m; ++j)
+        for (j = 1; j <= m; j++)
         {
             char x_i = finalString1[i-1];
             char y_j = finalString2[j-1];
-            A[i][j] = min({A[i-1][j-1] + mismatchPenalty[x_i - 'A'][y_j - 'A'],
-                          A[i-1][j] + gap_penalty,
-                          A[i][j-1] + gap_penalty});
+            OPT[i][j] = min({OPT[i-1][j-1] + mismatchPenalty[x_i - 'A'][y_j - 'A'], OPT[i-1][j] + gap_penalty,
+                          OPT[i][j-1] + gap_penalty});
         }
     }
 
@@ -68,7 +67,8 @@ int align(string finalString1, string finalString2, int gap_penalty,
     {
         char x_i = finalString1[i-1];
         char y_j = finalString2[j-1];
-        if (A[i][j] == A[i-1][j-1] + mismatchPenalty[x_i - 'A'][y_j - 'A'])
+
+        if (OPT[i][j] == OPT[i-1][j-1] + mismatchPenalty[x_i - 'A'][y_j - 'A'])
         {
             alignedString1 = x_i + alignedString1;
             alignedString2 = y_j + alignedString2;
@@ -76,18 +76,18 @@ int align(string finalString1, string finalString2, int gap_penalty,
             j--;
             //
         }
-        else if (A[i][j] == A[i-1][j] + gap_penalty)
+        else if (OPT[i][j] == OPT[i][j-1] + gap_penalty)
         {
-            alignedString1 = x_i + alignedString1;
-            alignedString2 = '-' + alignedString2;
-			//
-			i--;        
-        }
-        else if (A[i][j] == A[i][j-1] + gap_penalty)
-        {
-            alignedString1 = '-' + alignedString1;
+            alignedString1 = '_' + alignedString1;
             alignedString2 = y_j + alignedString2;
             j--;
+        }
+        else if (OPT[i][j] == OPT[i-1][j] + gap_penalty)
+        {
+            alignedString1 = x_i + alignedString1;
+            alignedString2 = '_' + alignedString2;
+			//
+			i--;        
         }
         else
         	cout<<"Something Wrong \n";
@@ -96,17 +96,17 @@ int align(string finalString1, string finalString2, int gap_penalty,
     while (i >= 1 && j < 1)
     {
         alignedString1 = finalString1[i-1] + alignedString1;
-        alignedString2 = '-' + alignedString2;
+        alignedString2 = '_' + alignedString2;
         --i;
     }
     while (j >= 1 && i < 1)
     {
-        alignedString1 = '-' + alignedString1;
+        alignedString1 = '_' + alignedString1;
         alignedString2 = finalString2[j-1] + alignedString2;
         --j;
     }
 	
-    return A[n][m];
+    return OPT[n][m];
 }
 
 
@@ -194,11 +194,11 @@ int main(int argc, char *argv[])
 	*/
 
 	int gap_penalty = 30;
-    int mismatchPenalty[alphabets][alphabets];
+    int mismatchPenalty[letters][letters];
     
-    for (int i = 0; i < alphabets; ++i)
+    for (int i = 0; i < letters; i++)
     {
-        for (int j = 0; j < alphabets; ++j)
+        for (int j = 0; j < letters; j++)
         {
             if (i == j) 
                 mismatchPenalty[i][j] = 0;
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 
     string alignedString1, alignedString2;
 
-    int penalty = align(finalString1, finalString2, gap_penalty, mismatchPenalty, alignedString1, alignedString2);
+    int penalty = alignSequence(finalString1, finalString2, gap_penalty, mismatchPenalty, alignedString1, alignedString2);
 
     cout << "finalString1: " << finalString1 << endl;
     cout << "finalString2: " << finalString2 << endl;
