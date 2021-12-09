@@ -11,6 +11,21 @@
 
 using namespace std;
 
+bool validateLength(string finalString, string baseString, int n)
+{
+	int validLength = pow(2, n) * baseString.length();
+	return (finalString.length() == validLength);
+}
+
+bool isNumber(string s)
+{
+	for (int i = 0; i < s.length(); i++)
+		if (isdigit(s[i]) == false)
+			return false;
+
+	return true;
+}
+
 int transform(char c)
 {
 	int i = -1;
@@ -21,131 +36,211 @@ int transform(char c)
 	return i;
 }
 
-int sequence_alignment(string a1, string b1, int delta, int alpha[4][4], string& a2, string& b2, int flag)
+const size_t alphabets = 26;
+
+int align(string finalString1, string finalString2, int gap_penalty,
+	int mismatchPenalty[alphabets][alphabets], string& alignedString1, string& alignedString2)
 {
-	int m = a1.size();
-	int n = b1.size();
+	int n = finalString1.size();
+	int m = finalString2.size();
 
-	if (flag == 0) 
+	vector<vector<int> > A(n + 1, vector<int>(m + 1));
+
+	int i, j;
+
+	for (i = 0; i <= m; ++i)
+		A[0][i] = gap_penalty * i;
+	for (i = 0; i <= n; ++i)
+		A[i][0] = gap_penalty * i;
+
+	for (i = 1; i <= n; ++i)
 	{
-		// m * 2 array
-		vector<vector<int>> OPT(m + 1, vector<int>(2, 0));
-
-		/*
-			Base case:
-			OPT[i][0] = i * delta for i = 0 to m
-		*/
-		for (int i = 0; i <= m; ++i)
-			OPT[i][0] = i * delta;
-
-		/*
-			Recurrence:
-		*/
-		for (int j = 1; j <= n; ++j) 
+		for (j = 1; j <= m; ++j)
 		{
-			OPT[0][1] = j * delta;
-			for(int i = 1; i <= m; ++i)
-			{
-				int x_i = transform(a1[i - 1]);
-				int y_j = transform(b1[j - 1]);
-				OPT[i][1] = min(OPT[i - 1][0] + alpha[x_i][y_j],
-					min(OPT[i - 1][1] + delta, OPT[i][0] + delta));
-			}
-			for (int i = 0; i <= m; ++i)
-				OPT[i][0] = OPT[i][1];
+			char x_i = finalString1[i - 1];
+			char y_j = finalString2[j - 1];
+			A[i][j] = min( A[i - 1][j - 1] + mismatchPenalty[x_i - 'A'][y_j - 'A'],
+						  min(A[i - 1][j] + gap_penalty, A[i][j - 1] + gap_penalty) );
 		}
-
-		/*
-			Back-trace:
-			NEEDS TO BE FINISHED!!!!!!!
-		*/
-
-		return OPT[m][1];
 	}
 
 
-	else 
+	//alignedString1 = "";
+	//alignedString2 = "";
+	i = n;
+	j = m;
+
+
+	while (i >= 1 && j >= 1)
 	{
-		// m * n array
-		vector<vector<int>> OPT(m + 1, vector<int>(n + 1, 0));
-
-		/*
-			Base case:
-			OPT[0][j] = j * delta for j = 0 to n
-			OPT[i][0] = i * delta for i = 0 to m
-		*/
-		for (int j = 0; j <= n; ++j)
-			OPT[0][j] = j * delta;
-		for (int i = 0; i <= m; ++i)
-			OPT[i][0] = i * delta;
-
-		/*
-			Recurrence:
-		*/
-		for (int j = 1; j <= n; ++j)
+		char x_i = finalString1[i - 1];
+		char y_j = finalString2[j - 1];
+		if (A[i][j] == A[i - 1][j - 1] + mismatchPenalty[x_i - 'A'][y_j - 'A'])
 		{
-			for (int i = 1; i <= m; ++i)
-			{
-				int x_i = transform(a1[i - 1]);
-				int y_j = transform(b1[j - 1]);
-
-				OPT[i][j] = min(OPT[i - 1][j - 1] + alpha[x_i][y_j],
-					min(OPT[i - 1][j] + delta, OPT[i][j - 1] + delta));
-			}
+			alignedString1 = x_i + alignedString1;
+			alignedString2 = y_j + alignedString2;
+			i--;
+			j--;
+			//
 		}
-
-		/*
-			Back-trace:
-			NOTE THIS IS WRONG!!!!!!!
-		*/
-		int i = m;
-		int j = n;
-		while (i >= 1 && j >= 1)
+		else if (A[i][j] == A[i - 1][j] + gap_penalty)
 		{
-			int x_i = transform(a1[i - 1]);
-			int y_j = transform(b1[j - 1]);
-
-			if (OPT[i][j] == OPT[i - 1][j - 1] + alpha[x_i][y_j])
-			{
-				a2 = a1[i - 1] + a2;
-				b2 = b1[j - 1] + b2;
-				i--;
-				j--;
-			}
-
-			else if (OPT[i][j] == OPT[i - 1][j] + delta) //up
-			{
-				a2 = a1[i - 1] + a2;
-				b2 = '-' + b2;
-				i--;
-			}
-			else if (OPT[i][j] == OPT[i][j - 1] + delta) // left
-			{
-				a2 = '-' + a2;
-				b2 = b1[j - 1] + b2;
-				j--;
-			}
+			alignedString1 = x_i + alignedString1;
+			alignedString2 = '-' + alignedString2;
+			//
+			i--;
 		}
-
-		while (i >= 1 && j < 1)
+		else if (A[i][j] == A[i][j - 1] + gap_penalty)
 		{
-			a2 = a1[i - 1] + a2;
-			b2 = '-' + b2;
-			--i;
+			alignedString1 = '-' + alignedString1;
+			alignedString2 = y_j + alignedString2;
+			j--;
 		}
-		while (j >= 1 && i < 1)
-		{
-			a2 = '-' + a2;
-			b2 = b1[j - 1] + b2;
-			--j;
-		}
-		return OPT[m][n];
+		else
+			cout << "Something Wrong \n";
 	}
 
-	return -1;
+	while (i >= 1 && j < 1)
+	{
+		alignedString1 = finalString1[i - 1] + alignedString1;
+		alignedString2 = '-' + alignedString2;
+		--i;
+	}
+	while (j >= 1 && i < 1)
+	{
+		alignedString1 = '-' + alignedString1;
+		alignedString2 = finalString2[j - 1] + alignedString2;
+		--j;
+	}
+
+	return A[n][m];
 }
 
-int memEff_sequence_alignment(string a1, string b1, int delta, int alpha[4][4], int q) {
+//int sequence_alignment(string a1, string b1, int delta, int alpha[4][4], string& a2, string& b2, int flag)
+//{
+//	int m = a1.size();
+//	int n = b1.size();
+//
+//	if (flag == 0) 
+//	{
+//		// m * 2 array
+//		vector<vector<int>> OPT(m + 1, vector<int>(2, 0));
+//
+//		/*
+//			Base case:
+//			OPT[i][0] = i * delta for i = 0 to m
+//		*/
+//		for (int i = 0; i <= m; ++i)
+//			OPT[i][0] = i * delta;
+//
+//		/*
+//			Recurrence:
+//		*/
+//		for (int j = 1; j <= n; ++j) 
+//		{
+//			OPT[0][1] = j * delta;
+//			for(int i = 1; i <= m; ++i)
+//			{
+//				int x_i = transform(a1[i - 1]);
+//				int y_j = transform(b1[j - 1]);
+//				OPT[i][1] = min(OPT[i - 1][0] + alpha[x_i][y_j],
+//					min(OPT[i - 1][1] + delta, OPT[i][0] + delta));
+//			}
+//			for (int i = 0; i <= m; ++i)
+//				OPT[i][0] = OPT[i][1];
+//		}
+//
+//		/*
+//			Back-trace:
+//			NEEDS TO BE FINISHED!!!!!!!
+//		*/
+//
+//		return OPT[m][1];
+//	}
+//
+//
+//	else 
+//	{
+//		// m * n array
+//		vector<vector<int>> OPT(m + 1, vector<int>(n + 1, 0));
+//
+//		/*
+//			Base case:
+//			OPT[0][j] = j * delta for j = 0 to n
+//			OPT[i][0] = i * delta for i = 0 to m
+//		*/
+//		for (int j = 0; j <= n; ++j)
+//			OPT[0][j] = j * delta;
+//		for (int i = 0; i <= m; ++i)
+//			OPT[i][0] = i * delta;
+//
+//		/*
+//			Recurrence:
+//		*/
+//		for (int j = 1; j <= n; ++j)
+//		{
+//			for (int i = 1; i <= m; ++i)
+//			{
+//				int x_i = transform(a1[i - 1]);
+//				int y_j = transform(b1[j - 1]);
+//
+//				OPT[i][j] = min(OPT[i - 1][j - 1] + alpha[x_i][y_j],
+//					min(OPT[i - 1][j] + delta, OPT[i][j - 1] + delta));
+//			}
+//		}
+//
+//		/*
+//			Back-trace:
+//			NOTE THIS IS WRONG!!!!!!!
+//		*/
+//		int i = m;
+//		int j = n;
+//		while (i >= 1 && j >= 1)
+//		{
+//			int x_i = transform(a1[i - 1]);
+//			int y_j = transform(b1[j - 1]);
+//
+//			if (OPT[i][j] == OPT[i - 1][j - 1] + alpha[x_i][y_j])
+//			{
+//				a2 = a1[i - 1] + a2;
+//				b2 = b1[j - 1] + b2;
+//				i--;
+//				j--;
+//			}
+//
+//			else if (OPT[i][j] == OPT[i - 1][j] + delta) //up
+//			{
+//				a2 = a1[i - 1] + a2;
+//				b2 = '-' + b2;
+//				i--;
+//			}
+//			else if (OPT[i][j] == OPT[i][j - 1] + delta) // left
+//			{
+//				a2 = '-' + a2;
+//				b2 = b1[j - 1] + b2;
+//				j--;
+//			}
+//		}
+//
+//		while (i >= 1 && j < 1)
+//		{
+//			a2 = a1[i - 1] + a2;
+//			b2 = '-' + b2;
+//			--i;
+//		}
+//		while (j >= 1 && i < 1)
+//		{
+//			a2 = '-' + a2;
+//			b2 = b1[j - 1] + b2;
+//			--j;
+//		}
+//		return OPT[m][n];
+//	}
+//
+//	return -1;
+//}
+
+int sequence_alignment(string a1, string b1, int delta, int mismatchPenalty[alphabets][alphabets]) {
 	int m = a1.size();
 	int n = b1.size();
 
@@ -167,28 +262,25 @@ int memEff_sequence_alignment(string a1, string b1, int delta, int alpha[4][4], 
 		OPT[0][1] = j * delta;
 		for (int i = 1; i <= m; ++i)
 		{
-			int x_i = transform(a1[i - 1]);
+			char x_i = a1[i - 1];
+			char y_j = b1[j - 1];
+			OPT[i][1] = min(OPT[i - 1][0] + mismatchPenalty[x_i - 'A'][y_j - 'A'],
+				min(OPT[i - 1][1] + delta, OPT[i][0] + delta));
+
+			/*int x_i = transform(a1[i - 1]);
 			int y_j = transform(b1[j - 1]);
 			OPT[i][1] = min(OPT[i - 1][0] + alpha[x_i][y_j],
-				min(OPT[i - 1][1] + delta, OPT[i][0] + delta));
+							min(OPT[i - 1][1] + delta, OPT[i][0] + delta));*/
 		}
 		for (int i = 0; i <= m; ++i)
 			OPT[i][0] = OPT[i][1];
 	}
 
-	int smallest = 5000;
-	for (int i = 0; i <= m; ++i) {
-		if (OPT[i][1] < smallest) {
-			smallest = OPT[i][1];
-			q = i;
-		}
-	}
-
-	return OPT[q][1];
+	return OPT[m][1];
 
 }
 
-int backMemEff_sequence_alignment(string a1, string b1, int delta, int alpha[4][4], int q) {
+void memEff_sequence_alignment(vector<int> &cost, string a1, string b1, int delta, int mismatchPenalty[alphabets][alphabets]) {
 	int m = a1.size();
 	int n = b1.size();
 
@@ -199,95 +291,101 @@ int backMemEff_sequence_alignment(string a1, string b1, int delta, int alpha[4][
 		Base case:
 		OPT[i][0] = i * delta for i = 0 to m
 	*/
-	for (int i = m; i >= 0; i--)
+	for (int i = 0; i <= m; ++i)
 		OPT[i][0] = i * delta;
 
 	/*
 		Recurrence:
 	*/
-	for (int j = n-1; j >= 0; j--)
+	for (int j = 1; j <= n; ++j)
 	{
 		OPT[0][1] = j * delta;
-		for (int i = m-1; i >= 0; i--)
+		for (int i = 1; i <= m; ++i)
 		{
-			int x_i = transform(a1[i + 1]);
-			int y_j = transform(b1[j + 1]);
-			OPT[i][1] = min(OPT[i + 1][0] + alpha[x_i][y_j],
-				min(OPT[i + 1][1] + delta, OPT[i][0] + delta));
+			char x_i = a1[i - 1];
+			char y_j = b1[j - 1];
+			OPT[i][1] = min( OPT[i - 1][0] + mismatchPenalty[x_i - 'A'][y_j - 'A'],
+						  min(OPT[i - 1][1] + delta, OPT[i][0] + delta) );
+
+			/*int x_i = transform(a1[i - 1]);
+			int y_j = transform(b1[j - 1]);
+			OPT[i][1] = min(OPT[i - 1][0] + alpha[x_i][y_j], 
+							min(OPT[i - 1][1] + delta, OPT[i][0] + delta));*/
 		}
-		for (int i = m ; i >= 0; --i)
+		for (int i = 0; i <= m; ++i)
 			OPT[i][0] = OPT[i][1];
 	}
 
-	int smallest = 5000;
-	for (int i = 0; i <= m; i++) {
-		if (OPT[i][1] < smallest) {
-			smallest = OPT[i][1];
-			q = i;
-		}
+	for (int i = 0; i < m; i++) {
+		cost[i] = OPT[i][1];
 	}
 
-	return OPT[q][1];
+	//return OPT[m][1];
 
 }
 
-void D_and_C_Alignment(string a1, string b1, int delta, int alpha[4][4], string & a2, string & b2, int & penalty) {
+void D_and_C_Alignment(string a1, string b1, int delta, int mismatchPenalty[alphabets][alphabets],
+						string & a2, string & b2, int & penalty) {
 	int m = a1.size();
 	int n = b1.size();
+	int nMid = n / 2;
+	int mMid = 0;
 
-	if (m <= 2 || n <= 2) cout << "base algo goes here\n"; //sequence_alignment(a1, b1, delta, alpha, a2, b2, 1); //temporary base algorithm. Change this to Mayank's version
+	if (m <= 2 || n <= 2) penalty += align(a1, b1, delta, mismatchPenalty, a2, b2); //sequence_alignment(a1, b1, delta, mismatchPenalty);//temporary base algorithm. Change this to Mayank's version
 	else {
-		string bLowerHalf = b1.substr(0, n / 2);
-		string bUpperHalf = b1.substr((n / 2) + 1);
+		string bLowerHalf = b1.substr(0, nMid);
+		string bUpperHalf = b1.substr(nMid);
+		vector<int> tcost(m), lcost(m), rcost(m);
 
-		int q = 0;
+		string a1Rev = a1;
+		string bUpperHalfRev = bUpperHalf;
 
-		int optValLow = memEff_sequence_alignment(a1, bLowerHalf, delta, alpha, q);
-		int optValUp = backMemEff_sequence_alignment(a1, bUpperHalf, delta, alpha, q);
+		reverse(a1Rev.begin(), a1Rev.end());
+		reverse(bUpperHalfRev.begin(), bUpperHalfRev.end());
 
-		penalty += optValLow + optValUp;
+		memEff_sequence_alignment(lcost, a1, bLowerHalf, delta, mismatchPenalty);
+		memEff_sequence_alignment(rcost, a1Rev, bUpperHalfRev, delta, mismatchPenalty);
 
-		a2 += a1.at(q);
-		b2 += b1.at(n / 2);
+		for (int i = 0; i < m; i++) {
+			tcost[i] = lcost[i] + rcost[i];
+			if (tcost[i] < tcost[mMid]) {
+				mMid = i;
+			}
+		}
 
-		string aLowerHalf = a1.substr(0, q);
-		string aUpperHalf = a1.substr(q + 1);
+		a2 += a1.at(mMid);
+		b2 += b1.at(mMid);
 
-		D_and_C_Alignment(aLowerHalf, bLowerHalf, delta, alpha, a2, b2, penalty);
-		D_and_C_Alignment(aUpperHalf, bUpperHalf, delta, alpha, a2, b2, penalty);
-		
+		string aLowerHalf = a1.substr(0, mMid);
+		string aUpperHalf = a1.substr(mMid);
+
+		D_and_C_Alignment(aUpperHalf, bUpperHalf, delta, mismatchPenalty, a2, b2, penalty);
+		D_and_C_Alignment(aLowerHalf, bLowerHalf, delta, mismatchPenalty, a2, b2, penalty);
 		
 	}
 }
 
-bool validateLength(string finalString, string baseString, int n)
-{
-	int validLength = pow(2,n) * baseString.length(); 
-	return (finalString.length() == validLength);
-}
-
-bool isNumber(string s)
-{
-    for (int i = 0; i < s.length(); i++)
-        if (isdigit(s[i]) == false)
-            return false;
-
-    return true;
-}
-
-int main()
+int main(int argc, char *argv[])
 {
 
-	string a = "", b = ""; // The base string a, b in the input file
-	string a1 = "", b1 = ""; // The final strings a1, b1 generated from the base strings
+	string inputFile = "";
+
+	if (argc > 1)
+		inputFile = argv[1];
+	else
+		cout << "No input file provided \n";
+
+	string baseString1 = "", baseString2 = ""; // The base string in the input file
+	string finalString1 = "", finalString2 = ""; // The final strings generated from the base strings
 
 	int j = 0, k = 0;
 	int counter = 0;
 
 	fstream myFile;
-	myFile.open("input2.txt", ios::in); // Read
+	ofstream outputFile("output.txt");
 
-	ofstream outputFile("output.txt"); //File to write out to
+	//myFile.open("input2.txt", ios::in); // Read 
+	myFile.open(inputFile, ios::in);
 
 	if (myFile.is_open())
 	{
@@ -296,8 +394,8 @@ int main()
 		{
 			if (counter == 0)
 			{
-				a += line;
-				a1 += line;
+				baseString1 += line;
+				finalString1 += line;
 				counter++;
 			}
 
@@ -307,7 +405,7 @@ int main()
 				{
 					int indexToAppend = stoi(line);
 					indexToAppend++;
-					a1.insert(indexToAppend, a1);
+					finalString1.insert(indexToAppend, finalString1);
 					j++;
 				}
 				else counter++;
@@ -315,8 +413,8 @@ int main()
 
 			if (counter == 2)
 			{
-				b += line;
-				b1 += line;
+				baseString2 += line;
+				finalString2 += line;
 				counter++;
 			}
 
@@ -326,16 +424,20 @@ int main()
 				{
 					int indexToAppend = stoi(line);
 					indexToAppend++;
-					b1.insert(indexToAppend, b1);
+					finalString2.insert(indexToAppend, finalString2);
 					k++;
 				}
 			}
+
 		}
 		myFile.close();
 	}
+	int m, n;
+	n = validateLength(finalString1, baseString1, j); // Validate 1st generated string is of length (2^j)*str1.length 
+	m = validateLength(finalString2, baseString2, k); // Validate 2nd generated string is of length (2^k)*str2.length
 
-	validateLength(a1, a, j); // Validate 1st generated string is of length (2^j)*str1.length 
-	validateLength(b1, b, k); // Validate 2nd generated string is of length (2^k)*str2.length
+	if (n == -1 || m == -1)
+		cout << "Error in string generation \n";
 
 	// The description asks us to validate the length of the generated strings. Just in case, the function returns false, what do we do?
 	/*
@@ -350,7 +452,8 @@ int main()
 	/*
 		The mismatch penalty (alpha) table
 	*/
-	int alpha[4][4];
+
+	/*int alpha[4][4];
 	for (int i = 0; i < 4; ++i)
 		for (size_t j = 0; j < 4; ++j)
 			if (i == j) alpha[i][j] = 0;
@@ -365,7 +468,36 @@ int main()
 	alpha[2][3] = 110;
 	alpha[3][0] = 94;
 	alpha[3][1] = 48;
-	alpha[3][2] = 110;
+	alpha[3][2] = 110;*/
+
+	int mismatchPenalty[alphabets][alphabets];
+
+	for (int i = 0; i < alphabets; ++i)
+	{
+		for (int j = 0; j < alphabets; ++j)
+		{
+			if (i == j)
+				mismatchPenalty[i][j] = 0;
+			else
+				mismatchPenalty[i][j] = 1;
+		}
+	}
+
+	mismatchPenalty['A' - 'A']['C' - 'A'] = 110;
+	mismatchPenalty['A' - 'A']['G' - 'A'] = 48;
+	mismatchPenalty['A' - 'A']['T' - 'A'] = 94;
+
+	mismatchPenalty['C' - 'A']['A' - 'A'] = 110;
+	mismatchPenalty['C' - 'A']['G' - 'A'] = 118;
+	mismatchPenalty['C' - 'A']['T' - 'A'] = 48;
+
+	mismatchPenalty['G' - 'A']['A' - 'A'] = 48;
+	mismatchPenalty['G' - 'A']['C' - 'A'] = 118;
+	mismatchPenalty['G' - 'A']['T' - 'A'] = 110;
+
+	mismatchPenalty['T' - 'A']['A' - 'A'] = 94;
+	mismatchPenalty['T' - 'A']['C' - 'A'] = 48;
+	mismatchPenalty['T' - 'A']['G' - 'A'] = 110;
 
 	/*
 		The gap penalty (delta)
@@ -385,9 +517,10 @@ int main()
 	*/
 	string a2, b2 = "";
 	int penalty = 0;
-	D_and_C_Alignment(a1, b1, delta, alpha, a2, b2, penalty);
+
+	D_and_C_Alignment(finalString1, finalString2, delta, mismatchPenalty, a2, b2, penalty);
 	//int penalty = memEff_sequence_alignment(a1, b1, delta, alpha, a2, b2);
-	//penalty = sequence_alignment(a1, b1, delta, alpha, a2, b2, flag);
+	//penalty = align(finalString1, finalString2, delta, mismatchPenalty, a2, b2);
 
 	//Outputs RAM being used. However, not sure if this is specific to windows machines or not
 	bool result = K32GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
@@ -409,8 +542,8 @@ int main()
 	//}
 	
 	if (outputFile.is_open()) {
-		outputFile << "a: " << a1 << endl;
-		outputFile << "b: " << b1 << endl;
+		outputFile << "a: " << finalString1 << endl;
+		outputFile << "b: " << finalString2 << endl;
 		outputFile << "Penalty: " << penalty << endl;
 		outputFile << "Aligned sequences: " << endl;
 		outputFile << a2 << endl;
