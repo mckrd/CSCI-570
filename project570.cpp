@@ -26,15 +26,15 @@ bool isNumber(string s)
 	return true;
 }
 
-int transform(char c)
-{
-	int i = -1;
-	if (c == 'A') i = 0;
-	if (c == 'C') i = 1;
-	if (c == 'G') i = 2;
-	if (c == 'T') i = 3;
-	return i;
-}
+//int transform(char c)
+//{
+//	int i = -1;
+//	if (c == 'A') i = 0;
+//	if (c == 'C') i = 1;
+//	if (c == 'G') i = 2;
+//	if (c == 'T') i = 3;
+//	return i;
+//}
 
 const size_t alphabets = 26;
 
@@ -240,46 +240,6 @@ int align(string finalString1, string finalString2, int gap_penalty,
 //	return -1;
 //}
 
-int sequence_alignment(string a1, string b1, int delta, int mismatchPenalty[alphabets][alphabets]) {
-	int m = a1.size();
-	int n = b1.size();
-
-	// m * 2 array
-	vector<vector<int>> OPT(m + 1, vector<int>(2, 0));
-
-	/*
-		Base case:
-		OPT[i][0] = i * delta for i = 0 to m
-	*/
-	for (int i = 0; i <= m; ++i)
-		OPT[i][0] = i * delta;
-
-	/*
-		Recurrence:
-	*/
-	for (int j = 1; j <= n; ++j)
-	{
-		OPT[0][1] = j * delta;
-		for (int i = 1; i <= m; ++i)
-		{
-			char x_i = a1[i - 1];
-			char y_j = b1[j - 1];
-			OPT[i][1] = min(OPT[i - 1][0] + mismatchPenalty[x_i - 'A'][y_j - 'A'],
-				min(OPT[i - 1][1] + delta, OPT[i][0] + delta));
-
-			/*int x_i = transform(a1[i - 1]);
-			int y_j = transform(b1[j - 1]);
-			OPT[i][1] = min(OPT[i - 1][0] + alpha[x_i][y_j],
-							min(OPT[i - 1][1] + delta, OPT[i][0] + delta));*/
-		}
-		for (int i = 0; i <= m; ++i)
-			OPT[i][0] = OPT[i][1];
-	}
-
-	return OPT[m][1];
-
-}
-
 void memEff_sequence_alignment(vector<int> &cost, string a1, string b1, int delta, int mismatchPenalty[alphabets][alphabets]) {
 	int m = a1.size();
 	int n = b1.size();
@@ -331,7 +291,7 @@ void D_and_C_Alignment(string a1, string b1, int delta, int mismatchPenalty[alph
 	int nMid = n / 2;
 	int mMid = 0;
 
-	if (m <= 2 || n <= 2) penalty += align(a1, b1, delta, mismatchPenalty, a2, b2); //sequence_alignment(a1, b1, delta, mismatchPenalty);//temporary base algorithm. Change this to Mayank's version
+	if (m <= 2 || n <= 2) penalty += align(a1, b1, delta, mismatchPenalty, a2, b2); 
 	else {
 		string bLowerHalf = b1.substr(0, nMid);
 		string bUpperHalf = b1.substr(nMid);
@@ -347,27 +307,34 @@ void D_and_C_Alignment(string a1, string b1, int delta, int mismatchPenalty[alph
 		memEff_sequence_alignment(rcost, a1Rev, bUpperHalfRev, delta, mismatchPenalty);
 
 
-		for (int i = 0; i < m; i++) {
-			tcost[i] = lcost[i] + rcost[(a1.size() - 1) - i];
+		for (int i = 0; i <= a1.size(); i++) {
+			tcost[i] = lcost[i] + rcost[a1.size() - i];
 			if (tcost[i] < tcost[mMid]) {
 				mMid = i;
 			}
 		}
 
-		a2 += a1.at(mMid);
-		b2 += b1.at(nMid);
+		//a2 += a1.at(mMid);
+		//b2 += b1.at(nMid);
 
 		string aLowerHalf = a1.substr(0, mMid);
 		string aUpperHalf = a1.substr(mMid);
 
+
 		D_and_C_Alignment(aUpperHalf, bUpperHalf, delta, mismatchPenalty, a2, b2, penalty);
 		D_and_C_Alignment(aLowerHalf, bLowerHalf, delta, mismatchPenalty, a2, b2, penalty);
+
+
 		
 	}
 }
 
 int main(int argc, char *argv[])
 {
+	//PMC is used to detect how much RAM is used. May or may not be a windows-only command.
+	PROCESS_MEMORY_COUNTERS pmc;
+
+	clock_t startTime = clock();
 
 	string inputFile = "";
 
@@ -449,11 +416,6 @@ int main(int argc, char *argv[])
 	cout<<"k is: "<<k<<"\n";
 	cout<<"final generated string 2 is: "<<b1<<"\n";
 	*/
-
-	/*
-		The mismatch penalty (alpha) table
-	*/
-
 	/*int alpha[4][4];
 	for (int i = 0; i < 4; ++i)
 		for (size_t j = 0; j < 4; ++j)
@@ -470,6 +432,10 @@ int main(int argc, char *argv[])
 	alpha[3][0] = 94;
 	alpha[3][1] = 48;
 	alpha[3][2] = 110;*/
+
+	/*
+	The mismatch penalty (alpha) table
+	*/
 
 	int mismatchPenalty[alphabets][alphabets];
 
@@ -510,50 +476,58 @@ int main(int argc, char *argv[])
 	*/
 	int flag = 0;
 
-	//PMC is used to detect how much RAM is used. May or may not be a windows-only command.
-	PROCESS_MEMORY_COUNTERS pmc;
-
 	/*
 		The resulting aligned strings
 	*/
 	string a2, b2 = "";
 	int penalty = 0;
 
+
 	D_and_C_Alignment(finalString1, finalString2, delta, mismatchPenalty, a2, b2, penalty);
-	//int penalty = memEff_sequence_alignment(a1, b1, delta, alpha, a2, b2);
 	//penalty = align(finalString1, finalString2, delta, mismatchPenalty, a2, b2);
 
-	//Outputs RAM being used. However, not sure if this is specific to windows machines or not
+	//Outputs RAM being used. This code is specific to Windows Machines:
 	bool result = K32GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
 	SIZE_T physMemUsedByMe = pmc.WorkingSetSize;
 
-	//temporary timer code starts here
-
-	//clock_t startTime = clock();
-	//float secondsPassed;
-	//float secondsToDelay = 10;
-
-	//bool flag = true;
-	//while (flag) {
-	//	secondsPassed = (clock() - startTime) / CLOCKS_PER_SEC;
-	//	if (secondsPassed >= secondsToDelay) {
-	//		if (outputFile.is_open()) outputFile << secondsPassed << " seconds have passed.\n";
-	//		flag = false;
-	//	}
-	//}
+	double msTimer = (clock() - startTime) / (double)(CLOCKS_PER_SEC / 1000);
 	
 	if (outputFile.is_open()) {
 		outputFile << "a: " << finalString1 << endl;
 		outputFile << "b: " << finalString2 << endl;
 		outputFile << "Penalty: " << penalty << endl;
+		outputFile << "Memory Used: " << physMemUsedByMe / 1024 << endl;
+		outputFile << "Seconds Passed: " << msTimer / 1000 << endl << endl;
 		outputFile << "Aligned sequences: " << endl;
-		outputFile << a2 << endl;
-		outputFile << b2 << endl;
+
+		if (a2.size() <= 50 && b2.size() <= 50) {
+			outputFile << a2 << endl;
+			outputFile << b2 << endl;
+		}
+		else {
+			string afirst50, alast50 = "";
+			string bfirst50, blast50 = "";
+
+			for (int i = 0; i <= 50; i++) {
+				afirst50 += a2.at(i);
+				alast50 += a2.at((a2.size() - 1) - i);
+			}
+
+			for (int i = 0; i <= 50; i++) {
+				bfirst50 += b2.at(i);
+				blast50 += b2.at((b2.size() - 1) - i);
+			}
+
+			reverse(alast50.begin(), alast50.end());
+			reverse(blast50.begin(), blast50.end());
+
+			outputFile << "First 50: " << afirst50 << endl;
+			outputFile << "First 50: " << bfirst50 << endl;
+			
+			outputFile << "Last 50: " << alast50 << endl;
+			outputFile << "Last 50: " << blast50 << endl;
+		}
 	}
-
-
-
-	outputFile << physMemUsedByMe/1024 << " Kilobytes of memory used.\n";
 
 
 	return 0;
