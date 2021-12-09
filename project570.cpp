@@ -3,45 +3,132 @@
 #include <string>
 #include <math.h>
 #include <ctype.h>
-#include <ctime>
-#include <cstdlib>
+#include <vector>
 
-#include <Windows.h>
-#include <Psapi.h>
 
 using namespace std;
 
-bool validateLength(string finalString, string baseString, int n)
+int validateLength(string finalString, string baseString, int n)
 {
 	int validLength = pow(2,n) * baseString.length(); 
-	return (finalString.length() == validLength);
+	if ( finalString.length() == validLength)
+		return validLength;
+	else return -1;
 }
 
 bool isNumber(string s)
-{
+{	
+	cout<<s<<"\n";
     for (int i = 0; i < s.length(); i++)
         if (isdigit(s[i]) == false)
+        {
             return false;
-
+        }
     return true;
 
 }
 
-int main()
+const size_t alphabets = 26;
+
+int align(string finalString1, string finalString2, int gap_penalty, 
+		int mismatchPenalty[alphabets][alphabets], string &alignedString1, string &alignedString2)
 {
-	//PMC is used to detect how much RAM is used. May or may not be a windows-only command.
-	PROCESS_MEMORY_COUNTERS pmc;
+    int n = finalString1.size();
+    int m = finalString2.size();
+
+    vector<vector<int> > A(n + 1, vector<int>(m + 1));
+
+    int i, j;
+
+    for (i = 0; i <= m; ++i)
+        A[0][i] = gap_penalty * i;
+    for (i = 0; i <= n; ++i)
+        A[i][0] = gap_penalty * i;
+
+    for (i = 1; i <= n; ++i)
+    {
+        for (j = 1; j <= m; ++j)
+        {
+            char x_i = finalString1[i-1];
+            char y_j = finalString2[j-1];
+            A[i][j] = min({A[i-1][j-1] + mismatchPenalty[x_i - 'A'][y_j - 'A'],
+                          A[i-1][j] + gap_penalty,
+                          A[i][j-1] + gap_penalty});
+        }
+    }
+
+
+    alignedString1 = "";
+    alignedString2 = "";
+    i = n;
+    j = m;
+
+	
+	while ( i >= 1 && j >= 1)
+    {
+        char x_i = finalString1[i-1];
+        char y_j = finalString2[j-1];
+        if (A[i][j] == A[i-1][j-1] + mismatchPenalty[x_i - 'A'][y_j - 'A'])
+        {
+            alignedString1 = x_i + alignedString1;
+            alignedString2 = y_j + alignedString2;
+            i--;
+            j--;
+            //
+        }
+        else if (A[i][j] == A[i-1][j] + gap_penalty)
+        {
+            alignedString1 = x_i + alignedString1;
+            alignedString2 = '-' + alignedString2;
+			//
+			i--;        
+        }
+        else if (A[i][j] == A[i][j-1] + gap_penalty)
+        {
+            alignedString1 = '-' + alignedString1;
+            alignedString2 = y_j + alignedString2;
+            j--;
+        }
+        else
+        	cout<<"Something Wrong \n";
+    }
+
+    while (i >= 1 && j < 1)
+    {
+        alignedString1 = finalString1[i-1] + alignedString1;
+        alignedString2 = '-' + alignedString2;
+        --i;
+    }
+    while (j >= 1 && i < 1)
+    {
+        alignedString1 = '-' + alignedString1;
+        alignedString2 = finalString2[j-1] + alignedString2;
+        --j;
+    }
+	
+    return A[n][m];
+}
+
+
+int main(int argc, char *argv[])
+{
+	string inputFile = "";
+
+	if (argc>1)
+		inputFile = argv[1];
+	else 
+		cout<<"No input file provided \n";
 
 	string baseString1 = "", baseString2 = ""; // The base string in the input file
 	string finalString1 = "", finalString2 = ""; // The final strings generated from the base strings
 	
 	int j = 0, k = 0; 
 	int counter = 0;
-	
-	fstream myFile;
-	myFile.open("input.txt", ios::in); // Read
 
-	ofstream outputFile("output.txt"); //File to write out to
+	fstream myFile;
+	
+	//myFile.open("input2.txt", ios::in); // Read 
+	myFile.open(inputFile, ios::in);
 	
 	if ( myFile.is_open())
 	{
@@ -84,14 +171,17 @@ int main()
 					k++;
 				}
 			}
+
 		}
 		myFile.close();
 	}
+	int m, n;
+	n = validateLength(finalString1, baseString1, j); // Validate 1st generated string is of length (2^j)*str1.length 
+	m = validateLength(finalString2, baseString2, k); // Validate 2nd generated string is of length (2^k)*str2.length
 
-	validateLength(finalString1, baseString1, j); // Validate 1st generated string is of length (2^j)*str1.length 
-	validateLength(finalString2, baseString2, k); // Validate 2nd generated string is of length (2^k)*str2.length
-
-	// The description asks us to validate the length of the generated strings. Just in case, the function returns false, what do we do?
+	if ( n == -1 || m == -1)
+		cout<<"Error in string generation \n";
+	
 	/*
 	cout<<"base string 1 is: "<<baseString1<<"\n";
 	cout<<"j is: "<<j<<"\n";
@@ -99,35 +189,54 @@ int main()
 	cout<<"base string 2 is: "<<baseString2<<"\n";
 	cout<<"k is: "<<k<<"\n";
 	cout<<"final generated string 2 is: "<<finalString2<<"\n";
+	cout<<"n is :"<<n<<"\n";
+	cout<<"m is :"<<m<<"\n";
 	*/
 
-	//temporary timer code starts here
+	int gap_penalty = 30;
+    int mismatchPenalty[alphabets][alphabets];
+    
+    for (int i = 0; i < alphabets; ++i)
+    {
+        for (int j = 0; j < alphabets; ++j)
+        {
+            if (i == j) 
+                mismatchPenalty[i][j] = 0;
+            else 
+                mismatchPenalty[i][j] = 1;
+        }
+    }
 
-	clock_t startTime = clock();
-	float secondsPassed;
-	float secondsToDelay = 10;
+    mismatchPenalty['A'-'A']['C'-'A'] = 110;
+    mismatchPenalty['A'-'A']['G'-'A'] = 48;
+    mismatchPenalty['A'-'A']['T'-'A'] = 94;
 
+    mismatchPenalty['C'-'A']['A'-'A'] = 110;
+    mismatchPenalty['C'-'A']['G'-'A'] = 118;
+    mismatchPenalty['C'-'A']['T'-'A'] = 48;
 
-	bool flag = true;
-	while (flag) {
-		secondsPassed = (clock() - startTime) / CLOCKS_PER_SEC;
-		if (secondsPassed >= secondsToDelay) {
-			if (outputFile.is_open()) outputFile << secondsPassed << " seconds have passed.\n";
-			flag = false;
-		}
-	}
-	
-	if (outputFile.is_open()) {
-		outputFile << "hello world\n";
-		outputFile << "this is where the timer information goes\n";
-	}
+    mismatchPenalty['G'-'A']['A'-'A'] = 48;
+    mismatchPenalty['G'-'A']['C'-'A'] = 118;
+    mismatchPenalty['G'-'A']['T'-'A'] = 110;
+    
+    mismatchPenalty['T'-'A']['A'-'A'] = 94;
+    mismatchPenalty['T'-'A']['C'-'A'] = 48;
+    mismatchPenalty['T'-'A']['G'-'A'] = 110;
 
-	//Outputs RAM being used. However, not sure if this is specific to windows machines or not
-	bool result = K32GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
-	SIZE_T physMemUsedByMe = pmc.WorkingSetSize;
+    string alignedString1, alignedString2;
 
-	outputFile << physMemUsedByMe/1024 << " Kilobytes of memory used.\n";
+    int penalty = align(finalString1, finalString2, gap_penalty, mismatchPenalty, alignedString1, alignedString2);
 
+    cout << "finalString1: " << finalString1 << endl;
+    cout << "finalString2: " << finalString2 << endl;
+    cout << "Overall penalty " << penalty << endl;
+    cout << "Aligned sequences: " << endl;
+    cout << alignedString1 << endl;
+    cout << alignedString2 << endl;
 
 	return 0;
 }
+
+
+
+
