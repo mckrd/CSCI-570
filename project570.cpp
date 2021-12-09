@@ -316,7 +316,7 @@ void memEff_sequence_alignment(vector<int> &cost, string a1, string b1, int delt
 			OPT[i][0] = OPT[i][1];
 	}
 
-	for (int i = 0; i < m; i++) {
+	for (int i = 0; i <= m; i++) {
 		cost[i] = OPT[i][1];
 	}
 
@@ -335,7 +335,7 @@ void D_and_C_Alignment(string a1, string b1, int delta, int mismatchPenalty[alph
 	else {
 		string bLowerHalf = b1.substr(0, nMid);
 		string bUpperHalf = b1.substr(nMid);
-		vector<int> tcost(m), lcost(m), rcost(m);
+		vector<int> tcost(a1.size() +1), lcost(a1.size() +1), rcost(a1.size() +1);
 
 		string a1Rev = a1;
 		string bUpperHalfRev = bUpperHalf;
@@ -346,15 +346,16 @@ void D_and_C_Alignment(string a1, string b1, int delta, int mismatchPenalty[alph
 		memEff_sequence_alignment(lcost, a1, bLowerHalf, delta, mismatchPenalty);
 		memEff_sequence_alignment(rcost, a1Rev, bUpperHalfRev, delta, mismatchPenalty);
 
+
 		for (int i = 0; i < m; i++) {
-			tcost[i] = lcost[i] + rcost[i];
+			tcost[i] = lcost[i] + rcost[(a1.size() - 1) - i];
 			if (tcost[i] < tcost[mMid]) {
 				mMid = i;
 			}
 		}
 
 		a2 += a1.at(mMid);
-		b2 += b1.at(mMid);
+		b2 += b1.at(nMid);
 
 		string aLowerHalf = a1.substr(0, mMid);
 		string aUpperHalf = a1.substr(mMid);
