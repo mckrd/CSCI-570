@@ -188,7 +188,8 @@ int main(int argc, char *argv[])
 				//*************
 				//if ( isNumber(line))
 				{
-					int indexToAppend = stoi(line);
+					//int indexToAppend = stoi(line);
+					int indexToAppend = stoi(command);
 					indexToAppend++;
 					finalString1.insert(indexToAppend,finalString1);
 					j++;
@@ -212,7 +213,8 @@ int main(int argc, char *argv[])
 				//*************
 				//if ( isNumber(line))
 				{
-					int indexToAppend = stoi(line);
+					//int indexToAppend = stoi(line);
+					int indexToAppend = stoi(command);
 					indexToAppend++;
 					finalString2.insert(indexToAppend,finalString2);
 					k++;	
