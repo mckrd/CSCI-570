@@ -4,7 +4,8 @@
 #include <math.h>
 #include <ctype.h>
 #include <vector>
-
+#include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -16,18 +17,47 @@ int validateLength(string finalString, string baseString, int n)
 	else return -1;
 }
 
+/*
 bool isNumber(string s)
 {	
-//	cout<<s<<"\n";
-    for (int i = 0; i < s.length(); i++)
+    for (int i = 0; i < s.length() && i != '\n'; i++)
+    {
+    	cout<<"returning true for "<<s[i]<<"\n";
         if (isdigit(s[i]) == false)
         {
+        	cout<<"returning false for "<<s[i]<<"\n";
             return false;
         }
+    }
+    	        
     return true;
 
 }
-
+*/
+bool isNumber(string s)
+{
+	//cout<<"s is:"<<s<<":\n";
+	if( isdigit(s[0]))
+	{
+		//cout<<"returning true for "<<s[0]<<"\n";
+		return true;
+	}
+	else return false;
+}
+/*
+bool isNumber(string s)
+{	
+    for (int i = 0; i < s.length() && i != '\n'; i++)
+    {
+    	cout<<"returning true for "<<s[i]<<"\n";
+        if (isdigit(s[i]) == true)
+        {
+        	return true;
+        }
+    }
+    return false;
+}
+*/
 const size_t letters = 26;
 
 int alignSequence(string finalString1, string finalString2, int gap_penalty, 
@@ -133,18 +163,30 @@ int main(int argc, char *argv[])
 	if ( myFile.is_open())
 	{
 		string line;
+		//************
+		string command;
+		//*************
 		while ( getline( myFile, line))
 		{
+			//***********
+			istringstream iss(line);
+			iss >> command;
+			//***********
 			if ( counter == 0)
 			{
-				baseString1 += line;
-				finalString1 += line;
+				//baseString1 += line;
+				//finalString1 += line;
+				baseString1 += command;
+				finalString1 += command;
 				counter++;
 			}
 			
 			else if ( counter == 1)
 			{
-				if ( isNumber(line))
+				//************
+				if (isNumber(command))
+				//*************
+				//if ( isNumber(line))
 				{
 					int indexToAppend = stoi(line);
 					indexToAppend++;
@@ -156,19 +198,25 @@ int main(int argc, char *argv[])
 
 			if ( counter == 2)
 			{
-				baseString2 += line;
-				finalString2 += line;
+				//baseString2 += line;
+				//finalString2 += line;
+				baseString2 += command;
+				finalString2 += command;
 				counter++;
 			}
 
 			else if (counter == 3)
 			{
-				if ( isNumber(line))
+				//************
+				if ( isNumber(command))
+				//*************
+				//if ( isNumber(line))
 				{
 					int indexToAppend = stoi(line);
 					indexToAppend++;
 					finalString2.insert(indexToAppend,finalString2);
-					k++;
+					k++;	
+					
 				}
 			}
 
