@@ -3,10 +3,15 @@
 #include <string>
 #include <math.h>
 #include <ctype.h>
+#include <time.h>
+#include <cstdlib>
 #include <vector>
-#include <sstream>
 #include <algorithm>
-
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <sstream>
 using namespace std;
 
 int validateLength(string finalString, string baseString, int n)
@@ -17,47 +22,13 @@ int validateLength(string finalString, string baseString, int n)
 	else return -1;
 }
 
-/*
-bool isNumber(string s)
-{	
-    for (int i = 0; i < s.length() && i != '\n'; i++)
-    {
-    	cout<<"returning true for "<<s[i]<<"\n";
-        if (isdigit(s[i]) == false)
-        {
-        	cout<<"returning false for "<<s[i]<<"\n";
-            return false;
-        }
-    }
-    	        
-    return true;
-
-}
-*/
 bool isNumber(string s)
 {
-	//cout<<"s is:"<<s<<":\n";
 	if( isdigit(s[0]))
-	{
-		//cout<<"returning true for "<<s[0]<<"\n";
 		return true;
-	}
 	else return false;
 }
-/*
-bool isNumber(string s)
-{	
-    for (int i = 0; i < s.length() && i != '\n'; i++)
-    {
-    	cout<<"returning true for "<<s[i]<<"\n";
-        if (isdigit(s[i]) == true)
-        {
-        	return true;
-        }
-    }
-    return false;
-}
-*/
+
 const size_t letters = 26;
 
 int alignSequence(string finalString1, string finalString2, int gap_penalty, 
@@ -86,13 +57,11 @@ int alignSequence(string finalString1, string finalString2, int gap_penalty,
         }
     }
 
-
     alignedString1 = "";
     alignedString2 = "";
     i = n;
     j = m;
 
-	
 	while ( i >= 1 && j >= 1)
     {
         char x_i = finalString1[i-1];
@@ -120,7 +89,7 @@ int alignSequence(string finalString1, string finalString2, int gap_penalty,
 			i--;        
         }
         else
-        	cout<<"Something Wrong \n";
+        	cout << "Something Wrong \n";
     }
 
     while (i >= 1 && j < 1)
@@ -142,7 +111,16 @@ int alignSequence(string finalString1, string finalString2, int gap_penalty,
 
 int main(int argc, char *argv[])
 {
+	clock_t startTime = clock();
+
 	string inputFile = "";
+
+	if (argc > 1)
+		inputFile = argv[1];
+	else
+		cout << "No input file provided \n";
+
+	ofstream outputFile("output.txt");
 
 	if (argc>1)
 		inputFile = argv[1];
@@ -156,11 +134,9 @@ int main(int argc, char *argv[])
 	int counter = 0;
 
 	fstream myFile;
-	
-	//myFile.open("input2.txt", ios::in); // Read 
 	myFile.open(inputFile, ios::in);
 	
-	if ( myFile.is_open())
+	if (myFile.is_open())
 	{
 		string line;
 		//************
@@ -231,17 +207,6 @@ int main(int argc, char *argv[])
 
 	if ( n == -1 || m == -1)
 		cout<<"Error in string generation \n";
-	
-	/*
-	cout<<"base string 1 is: "<<baseString1<<"\n";
-	cout<<"j is: "<<j<<"\n";
-	cout<<"final generated string 1 is: "<<finalString1<<"\n";
-	cout<<"base string 2 is: "<<baseString2<<"\n";
-	cout<<"k is: "<<k<<"\n";
-	cout<<"final generated string 2 is: "<<finalString2<<"\n";
-	cout<<"n is :"<<n<<"\n";
-	cout<<"m is :"<<m<<"\n";
-	*/
 
 	int gap_penalty = 30;
     int mismatchPenalty[letters][letters];
@@ -273,16 +238,51 @@ int main(int argc, char *argv[])
     mismatchPenalty['T'-'A']['C'-'A'] = 48;
     mismatchPenalty['T'-'A']['G'-'A'] = 110;
 
+    struct rusage usage;
+	long mem_usage, mem_usage2;
+
+	getrusage(RUSAGE_SELF, &usage);
+	mem_usage = usage.ru_maxrss;
+	
     string alignedString1, alignedString2;
 
     int penalty = alignSequence(finalString1, finalString2, gap_penalty, mismatchPenalty, alignedString1, alignedString2);
 
-    cout << "finalString1: " << finalString1 << endl;
-    cout << "finalString2: " << finalString2 << endl;
-    cout << "Overall penalty " << penalty << endl;
-    cout << "Aligned sequences: " << endl;
-    cout << alignedString1 << endl;
-    cout << alignedString2 << endl;
+	getrusage(RUSAGE_SELF, &usage);
+	mem_usage2 = usage.ru_maxrss;
+	
+	clock_t endTime = clock();
+	double msTimer = (double)(endTime - startTime) / CLOCKS_PER_SEC;
+
+	if (outputFile.is_open()) {
+		if (alignedString1.size() <= 50 && alignedString2.size() <= 50) {
+			outputFile << alignedString1 << endl;
+			outputFile << alignedString2 << endl;
+		}
+		else {
+			string afirst50, alast50 = "";
+			string bfirst50, blast50 = "";
+
+			for (int i = 0; i < 50; i++) {
+				afirst50 += alignedString1.at(i);
+				alast50 += alignedString1.at((alignedString1.size() - 1) - i);
+			}
+
+			for (int i = 0; i < 50; i++) {
+				bfirst50 += alignedString2.at(i);
+				blast50 += alignedString2.at((alignedString2.size() - 1) - i);
+			}
+
+			reverse(alast50.begin(), alast50.end());
+			reverse(blast50.begin(), blast50.end());
+
+			outputFile << afirst50 << " " << alast50 << endl;
+			outputFile << bfirst50 << " " << blast50 << endl;
+		}
+		outputFile << penalty << endl;
+		outputFile << msTimer << endl;	
+		outputFile << mem_usage << endl;	
+	}
 
 	return 0;
 }
