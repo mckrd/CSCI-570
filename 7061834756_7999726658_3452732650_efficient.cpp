@@ -10,6 +10,7 @@
 #include <time.h>
 #include <cstdlib>
 #include <ctype.h>
+#include <iomanip>
 
 //Windows Only h files. Comment these out to run on Linux/Mac
 //#include <Windows.h>
@@ -180,8 +181,6 @@ void D_and_C_Alignment(string a1, string b1, int delta, int mismatchPenalty[alph
 
 int main(int argc, char* argv[])
 {
-	clock_t startTime = clock();
-
 	string inputFile = "";
 
 	if (argc > 1)
@@ -303,6 +302,8 @@ int main(int argc, char* argv[])
 
 	struct rusage usage;
 	long mem_usage;
+	clock_t startTime = clock();
+
 	D_and_C_Alignment(finalString1, finalString2, delta, mismatchPenalty, a2, b2, penalty);
 	getrusage(RUSAGE_SELF, &usage);
 	mem_usage = usage.ru_maxrss;
@@ -335,7 +336,7 @@ int main(int argc, char* argv[])
 			outputFile << afirst50 << " " << alast50 << endl;
 			outputFile << bfirst50 << " " << blast50 << endl;
 		}
-		outputFile << penalty << endl;
+		outputFile << penalty << setprecision(3) << endl;
 		outputFile << msTimer << endl;	
 		outputFile << mem_usage << endl;	
 	}

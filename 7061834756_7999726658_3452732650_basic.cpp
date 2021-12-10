@@ -109,8 +109,6 @@ int alignSequence(string finalString1, string finalString2, int gap_penalty,
 
 int main(int argc, char *argv[])
 {
-	clock_t startTime = clock();
-
 	string inputFile = "";
 
 	if (argc > 1)
@@ -217,6 +215,7 @@ int main(int argc, char *argv[])
 
     struct rusage usage;
 	long mem_usage;
+	clock_t startTime = clock();
 	
     string alignedString1, alignedString2;
     int penalty = alignSequence(finalString1, finalString2, gap_penalty, mismatchPenalty, alignedString1, alignedString2);
