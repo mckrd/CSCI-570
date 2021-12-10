@@ -18,7 +18,7 @@ int validateLength(string finalString, string baseString, int n)
 
 bool isNumber(string s)
 {	
-	cout<<s<<"\n";
+//	cout<<s<<"\n";
     for (int i = 0; i < s.length(); i++)
         if (isdigit(s[i]) == false)
         {
