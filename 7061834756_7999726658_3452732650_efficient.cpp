@@ -310,6 +310,8 @@ int main(int argc, char* argv[])
 
 	clock_t endTime = clock();
 	double msTimer = (double)(endTime - startTime) / CLOCKS_PER_SEC;
+	float floatMem = (float)mem_usage;
+	float floatPen = (float)penalty;
 
 	if (outputFile.is_open()) {
 		if (a2.size() <= 50 && b2.size() <= 50) {
@@ -336,9 +338,11 @@ int main(int argc, char* argv[])
 			outputFile << afirst50 << " " << alast50 << endl;
 			outputFile << bfirst50 << " " << blast50 << endl;
 		}
-		outputFile << penalty << setprecision(3) << endl;
+		outputFile << floatPen << ".0" << endl;
 		outputFile << msTimer << endl;	
-		outputFile << mem_usage << endl;	
+		if (floor(floatMem) == floatMem) outputFile << floatMem << ".0" << endl;
+		else outputFile << floatMem << endl;
+		
 	}
 
 	return 0;
