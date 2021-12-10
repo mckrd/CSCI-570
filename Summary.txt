@@ -1,6 +1,13 @@
 ||Insights and Observations||
 
--we can figure this out tomorrow when we all agree on whether the project is good to go or not haha-
+As the problem size gets bigger (m + n) we see that Basic Algorithm taking more
+and more memory, which falls in line with our understanding of the basic dynamic
+programming algorithm which comes out a O(m*n) space complexity. The space efficient
+algorithm returns a more linear memory usage which falls in line with its O(m + n)
+space complexity.
+
+In terms of time, we see that the basic algorithm tends to be faster, while the
+recursive divide and conquer algorithm is about 2x slower.
 
 ||Project Contribution||
 Mayank Goyal
