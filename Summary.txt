@@ -1,0 +1,19 @@
+||Insights and Observations||
+
+-we can figure this out tomorrow when we all agree on whether the project is good to go or not haha-
+
+||Project Contribution||
+Mayank Goyal
+- Wrote code to read in the files as well as generate the full strings to be used
+as input for the algorithms
+- Implemented the Basic Dynamic Programming version of Sequence Alignment
+
+Yiqian
+- Tested code on a Linux Virtual Machine and implemented final memory calculation
+- Implemented the Space Efficient Divide and Conquer version of Sequence Alignment
+along with Ashley.
+
+Ashley Yu-Chih (7061834756)
+- Implemented the Space Efficient Divide and Conquer version of Sequence Alignment
+along with Yiqian
+- Implemented writing out to an output file.
