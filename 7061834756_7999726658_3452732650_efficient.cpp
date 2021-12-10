@@ -26,9 +26,7 @@ bool validateLength(string finalString, string baseString, int n)
 bool isNumber(string s)
 {
 	if (isdigit(s[0]))
-	{
 		return true;
-	}
 	else return false;
 }
 
@@ -60,12 +58,8 @@ int align(string finalString1, string finalString2, int gap_penalty,
 		}
 	}
 
-
-	//alignedString1 = "";
-	//alignedString2 = "";
 	i = n;
 	j = m;
-
 
 	while (i >= 1 && j >= 1)
 	{
@@ -77,18 +71,16 @@ int align(string finalString1, string finalString2, int gap_penalty,
 			alignedString2 = y_j + alignedString2;
 			i--;
 			j--;
-			//
 		}
 		else if (A[i][j] == A[i - 1][j] + gap_penalty)
 		{
 			alignedString1 = x_i + alignedString1;
-			alignedString2 = '-' + alignedString2;
-			//
+			alignedString2 = '_' + alignedString2;
 			i--;
 		}
 		else if (A[i][j] == A[i][j - 1] + gap_penalty)
 		{
-			alignedString1 = '-' + alignedString1;
+			alignedString1 = '_' + alignedString1;
 			alignedString2 = y_j + alignedString2;
 			j--;
 		}
@@ -99,12 +91,12 @@ int align(string finalString1, string finalString2, int gap_penalty,
 	while (i >= 1 && j < 1)
 	{
 		alignedString1 = finalString1[i - 1] + alignedString1;
-		alignedString2 = '-' + alignedString2;
+		alignedString2 = '_' + alignedString2;
 		--i;
 	}
 	while (j >= 1 && i < 1)
 	{
-		alignedString1 = '-' + alignedString1;
+		alignedString1 = '_' + alignedString1;
 		alignedString2 = finalString2[j - 1] + alignedString2;
 		--j;
 	}
@@ -138,11 +130,6 @@ void memEff_sequence_alignment(vector<int>& cost, string a1, string b1, int delt
 			char y_j = b1[j - 1];
 			OPT[i][1] = min(OPT[i - 1][0] + mismatchPenalty[x_i - 'A'][y_j - 'A'],
 				min(OPT[i - 1][1] + delta, OPT[i][0] + delta));
-
-			/*int x_i = transform(a1[i - 1]);
-			int y_j = transform(b1[j - 1]);
-			OPT[i][1] = min(OPT[i - 1][0] + alpha[x_i][y_j],
-							min(OPT[i - 1][1] + delta, OPT[i][0] + delta));*/
 		}
 		for (int i = 0; i <= m; ++i)
 			OPT[i][0] = OPT[i][1];
@@ -151,9 +138,6 @@ void memEff_sequence_alignment(vector<int>& cost, string a1, string b1, int delt
 	for (int i = 0; i <= m; i++) {
 		cost[i] = OPT[i][1];
 	}
-
-	//return OPT[m][1];
-
 }
 
 void D_and_C_Alignment(string a1, string b1, int delta, int mismatchPenalty[alphabets][alphabets],
@@ -178,7 +162,6 @@ void D_and_C_Alignment(string a1, string b1, int delta, int mismatchPenalty[alph
 		memEff_sequence_alignment(lcost, a1, bLowerHalf, delta, mismatchPenalty);
 		memEff_sequence_alignment(rcost, a1Rev, bUpperHalfRev, delta, mismatchPenalty);
 
-
 		for (int i = 0; i <= a1.size(); i++) {
 			tcost[i] = lcost[i] + rcost[a1.size() - i];
 			if (tcost[i] < tcost[mMid]) {
@@ -186,26 +169,17 @@ void D_and_C_Alignment(string a1, string b1, int delta, int mismatchPenalty[alph
 			}
 		}
 
-		//a2 += a1.at(mMid);
-		//b2 += b1.at(nMid);
-
 		string aLowerHalf = a1.substr(0, mMid);
 		string aUpperHalf = a1.substr(mMid);
 
 
 		D_and_C_Alignment(aUpperHalf, bUpperHalf, delta, mismatchPenalty, a2, b2, penalty);
 		D_and_C_Alignment(aLowerHalf, bLowerHalf, delta, mismatchPenalty, a2, b2, penalty);
-
-
-
 	}
 }
 
 int main(int argc, char* argv[])
 {
-	//PMC is used to detect how much RAM is used. May or may not be a windows-only command.
-	//PROCESS_MEMORY_COUNTERS pmc;
-
 	clock_t startTime = clock();
 
 	string inputFile = "";
@@ -224,7 +198,6 @@ int main(int argc, char* argv[])
 	fstream myFile;
 	ofstream outputFile("output.txt");
 
-	//myFile.open("input2.txt", ios::in); // Read 
 	myFile.open(inputFile, ios::in);
 
 	if (myFile.is_open())
@@ -278,7 +251,6 @@ int main(int argc, char* argv[])
 		myFile.close();
 	}
 
-
 	int m, n;
 	n = validateLength(finalString1, baseString1, j); // Validate 1st generated string is of length (2^j)*str1.length 
 	m = validateLength(finalString2, baseString2, k); // Validate 2nd generated string is of length (2^k)*str2.length
@@ -289,7 +261,6 @@ int main(int argc, char* argv[])
 	/*
 	The mismatch penalty (alpha) table
 	*/
-
 	int mismatchPenalty[alphabets][alphabets];
 
 	for (int i = 0; i < alphabets; ++i)

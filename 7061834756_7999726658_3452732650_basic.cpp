@@ -17,14 +17,14 @@ using namespace std;
 int validateLength(string finalString, string baseString, int n)
 {
 	int validLength = pow(2,n) * baseString.length(); 
-	if ( finalString.length() == validLength)
+	if (finalString.length() == validLength)
 		return validLength;
 	else return -1;
 }
 
 bool isNumber(string s)
 {
-	if( isdigit(s[0]))
+	if(isdigit(s[0]))
 		return true;
 	else return false;
 }
@@ -73,7 +73,6 @@ int alignSequence(string finalString1, string finalString2, int gap_penalty,
             alignedString2 = y_j + alignedString2;
             i--;
             j--;
-            //
         }
         else if (OPT[i][j] == OPT[i][j-1] + gap_penalty)
         {
@@ -85,7 +84,6 @@ int alignSequence(string finalString1, string finalString2, int gap_penalty,
         {
             alignedString1 = x_i + alignedString1;
             alignedString2 = '_' + alignedString2;
-			//
 			i--;        
         }
         else
@@ -122,11 +120,6 @@ int main(int argc, char *argv[])
 
 	ofstream outputFile("output.txt");
 
-	if (argc>1)
-		inputFile = argv[1];
-	else 
-		cout<<"No input file provided \n";
-
 	string baseString1 = "", baseString2 = ""; // The base string in the input file
 	string finalString1 = "", finalString2 = ""; // The final strings generated from the base strings
 	
@@ -139,32 +132,22 @@ int main(int argc, char *argv[])
 	if (myFile.is_open())
 	{
 		string line;
-		//************
 		string command;
-		//*************
-		while ( getline( myFile, line))
+		while (getline(myFile, line))
 		{
-			//***********
 			istringstream iss(line);
 			iss >> command;
-			//***********
-			if ( counter == 0)
+			if (counter == 0)
 			{
-				//baseString1 += line;
-				//finalString1 += line;
 				baseString1 += command;
 				finalString1 += command;
 				counter++;
 			}
 			
-			else if ( counter == 1)
+			else if (counter == 1)
 			{
-				//************
 				if (isNumber(command))
-				//*************
-				//if ( isNumber(line))
 				{
-					//int indexToAppend = stoi(line);
 					int indexToAppend = stoi(command);
 					indexToAppend++;
 					finalString1.insert(indexToAppend,finalString1);
@@ -173,10 +156,8 @@ int main(int argc, char *argv[])
 				else counter++;
 			}
 
-			if ( counter == 2)
+			if (counter == 2)
 			{
-				//baseString2 += line;
-				//finalString2 += line;
 				baseString2 += command;
 				finalString2 += command;
 				counter++;
@@ -184,29 +165,25 @@ int main(int argc, char *argv[])
 
 			else if (counter == 3)
 			{
-				//************
-				if ( isNumber(command))
-				//*************
-				//if ( isNumber(line))
+				if (isNumber(command))
 				{
-					//int indexToAppend = stoi(line);
 					int indexToAppend = stoi(command);
 					indexToAppend++;
 					finalString2.insert(indexToAppend,finalString2);
-					k++;	
-					
+					k++;		
 				}
 			}
 
 		}
 		myFile.close();
 	}
+
 	int m, n;
 	n = validateLength(finalString1, baseString1, j); // Validate 1st generated string is of length (2^j)*str1.length 
 	m = validateLength(finalString2, baseString2, k); // Validate 2nd generated string is of length (2^k)*str2.length
 
-	if ( n == -1 || m == -1)
-		cout<<"Error in string generation \n";
+	if (n == -1 || m == -1)
+		cout << "Error in string generation \n";
 
 	int gap_penalty = 30;
     int mismatchPenalty[letters][letters];
@@ -239,19 +216,16 @@ int main(int argc, char *argv[])
     mismatchPenalty['T'-'A']['G'-'A'] = 110;
 
     struct rusage usage;
-	long mem_usage, mem_usage2;
+	long mem_usage;
+	
+    string alignedString1, alignedString2;
+    int penalty = alignSequence(finalString1, finalString2, gap_penalty, mismatchPenalty, alignedString1, alignedString2);
+
+	clock_t endTime = clock();
 
 	getrusage(RUSAGE_SELF, &usage);
 	mem_usage = usage.ru_maxrss;
 	
-    string alignedString1, alignedString2;
-
-    int penalty = alignSequence(finalString1, finalString2, gap_penalty, mismatchPenalty, alignedString1, alignedString2);
-
-	getrusage(RUSAGE_SELF, &usage);
-	mem_usage2 = usage.ru_maxrss;
-	
-	clock_t endTime = clock();
 	double msTimer = (double)(endTime - startTime) / CLOCKS_PER_SEC;
 
 	if (outputFile.is_open()) {
